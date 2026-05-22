@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
+import { mockUserRoles } from '../../lib/mockAdminData';
 import { Loader2, Shield, ShieldAlert, User } from 'lucide-react';
 
 interface UserRole {
@@ -12,18 +14,24 @@ interface UserRole {
 export function UsersAdmin() {
   const [users, setUsers] = useState<UserRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const { isMockAdmin } = useAuth();
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
   const fetchUsers = async () => {
+    if (isMockAdmin) {
+      setUsers(mockUserRoles as UserRole[]);
+      setLoading(false);
+      return;
+    }
     try {
       const { data, error } = await supabase
         .from('user_roles')
         .select('*')
         .order('created_at', { ascending: false });
-      
+
       if (error) throw error;
       setUsers(data || []);
     } catch (error) {
@@ -35,12 +43,16 @@ export function UsersAdmin() {
   };
 
   const updateRole = async (userId: string, newRole: string) => {
+    if (isMockAdmin) {
+      alert('Mode démo — les modifications ne sont pas sauvegardées.');
+      return;
+    }
     try {
       const { error } = await supabase
         .from('user_roles')
         .update({ role: newRole })
         .eq('user_id', userId);
-        
+
       if (error) throw error;
       fetchUsers();
     } catch (error) {
@@ -61,6 +73,9 @@ export function UsersAdmin() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900 border-b-2 border-teal-500 pb-2 inline-block">Gestion des Rôles</h2>
+        {isMockAdmin && (
+          <span className="text-xs bg-amber-100 text-amber-700 px-3 py-1 rounded-full font-medium">Mode démo</span>
+        )}
       </div>
 
       <div className="overflow-x-auto">
@@ -88,15 +103,15 @@ export function UsersAdmin() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                   {u.role === 'admin' ? (
-                    <button 
-                      onClick={() => updateRole(u.user_id, 'user')} 
+                    <button
+                      onClick={() => updateRole(u.user_id, 'user')}
                       className="text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-md transition-colors"
                     >
                       Rétrograder en Utilisateur
                     </button>
                   ) : (
-                    <button 
-                      onClick={() => updateRole(u.user_id, 'admin')} 
+                    <button
+                      onClick={() => updateRole(u.user_id, 'admin')}
                       className="text-purple-700 hover:text-purple-900 bg-purple-100 hover:bg-purple-200 px-3 py-1 rounded-md transition-colors flex items-center gap-1 mx-auto"
                     >
                       <Shield className="h-4 w-4" />

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
+import { mockPayments } from '../../lib/mockAdminData';
 import { Loader2, Trash2, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import type { Payment } from '../../lib/database.types';
 
@@ -13,10 +15,16 @@ interface PaymentWithBooking extends Payment {
 export function PaymentsAdmin() {
   const [payments, setPayments] = useState<PaymentWithBooking[]>([]);
   const [loading, setLoading] = useState(true);
+  const { isMockAdmin } = useAuth();
 
   useEffect(() => { fetchPayments(); }, []);
 
   const fetchPayments = async () => {
+    if (isMockAdmin) {
+      setPayments(mockPayments as PaymentWithBooking[]);
+      setLoading(false);
+      return;
+    }
     try {
       const { data, error } = await supabase
         .from('payments')
@@ -40,6 +48,10 @@ export function PaymentsAdmin() {
   };
 
   const updateStatus = async (id: string, newStatus: string) => {
+    if (isMockAdmin) {
+      alert('Mode démo — les modifications ne sont pas sauvegardées.');
+      return;
+    }
     try {
       // Use from() without the generic type parameter to bypass strict update typing
       const { error } = await (supabase as any)
@@ -55,6 +67,10 @@ export function PaymentsAdmin() {
   };
 
   const handleDelete = async (id: string) => {
+    if (isMockAdmin) {
+      alert('Mode démo — les modifications ne sont pas sauvegardées.');
+      return;
+    }
     if (!window.confirm('Supprimer ce paiement ?')) return;
     try {
       const { error } = await supabase.from('payments').delete().eq('id', id);
@@ -93,6 +109,9 @@ export function PaymentsAdmin() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900 border-b-2 border-teal-500 pb-2 inline-block">Paiements</h2>
+        {isMockAdmin && (
+          <span className="text-xs bg-amber-100 text-amber-700 px-3 py-1 rounded-full font-medium">Mode démo</span>
+        )}
       </div>
 
       <div className="overflow-x-auto">

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
+import { mockAdminDestinations } from '../../lib/mockAdminData';
 import { Pencil, Trash2, Plus, Image as ImageIcon, Loader2, X, GripVertical } from 'lucide-react';
 
 interface ProgramDay {
@@ -40,6 +42,7 @@ const emptyForm = {
 export function DestinationsAdmin() {
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
+  const { isMockAdmin } = useAuth();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState(emptyForm);
@@ -90,6 +93,11 @@ export function DestinationsAdmin() {
   useEffect(() => { fetchDestinations(); }, []);
 
   const fetchDestinations = async () => {
+    if (isMockAdmin) {
+      setDestinations(mockAdminDestinations as Destination[]);
+      setLoading(false);
+      return;
+    }
     try {
       const { data, error } = await supabase
         .from('destinations')
@@ -107,6 +115,10 @@ export function DestinationsAdmin() {
 
   // ── CRUD ────────────────────────────────────────────────────────
   const handleDelete = async (id: string, name: string) => {
+    if (isMockAdmin) {
+      alert('Mode démo — les modifications ne sont pas sauvegardées.');
+      return;
+    }
     if (!window.confirm(`Êtes-vous sûr de vouloir supprimer la destination "${name}" ?`)) return;
     try {
       const { error } = await supabase.from('destinations').delete().eq('id', id);
@@ -164,6 +176,10 @@ export function DestinationsAdmin() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isMockAdmin) {
+      alert('Mode démo — les modifications ne sont pas sauvegardées.');
+      return;
+    }
     setSaving(true);
     try {
       // Upload main image if changed
@@ -220,6 +236,9 @@ export function DestinationsAdmin() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900 border-b-2 border-teal-500 pb-2 inline-block">Destinations</h2>
+        {isMockAdmin && (
+          <span className="text-xs bg-amber-100 text-amber-700 px-3 py-1 rounded-full font-medium">Mode démo</span>
+        )}
         <button
           onClick={handleCreate}
           className="flex items-center gap-2 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition"

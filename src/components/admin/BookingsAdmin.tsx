@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
+import { mockBookings } from '../../lib/mockAdminData';
 import { Loader2, Trash2, CheckCircle, XCircle } from 'lucide-react';
 
 interface Booking {
@@ -20,12 +22,18 @@ interface Booking {
 export function BookingsAdmin() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const { isMockAdmin } = useAuth();
 
   useEffect(() => {
     fetchBookings();
   }, []);
 
   const fetchBookings = async () => {
+    if (isMockAdmin) {
+      setBookings(mockBookings as Booking[]);
+      setLoading(false);
+      return;
+    }
     try {
       const { data, error } = await supabase
         .from('bookings')
@@ -34,7 +42,7 @@ export function BookingsAdmin() {
           destinations ( name )
         `)
         .order('created_at', { ascending: false });
-      
+
       if (error) throw error;
       setBookings(data || []);
     } catch (error) {
@@ -46,12 +54,16 @@ export function BookingsAdmin() {
   };
 
   const updateStatus = async (id: string, newStatus: string) => {
+    if (isMockAdmin) {
+      alert('Mode démo — les modifications ne sont pas sauvegardées.');
+      return;
+    }
     try {
       const { error } = await supabase
         .from('bookings')
         .update({ status: newStatus })
         .eq('id', id);
-        
+
       if (error) throw error;
       fetchBookings();
     } catch (error) {
@@ -61,14 +73,18 @@ export function BookingsAdmin() {
   };
 
   const handleDelete = async (id: string, name: string) => {
+    if (isMockAdmin) {
+      alert('Mode démo — les modifications ne sont pas sauvegardées.');
+      return;
+    }
     if (!window.confirm(`Êtes-vous sûr de vouloir supprimer la réservation de "${name}" ?`)) return;
-    
+
     try {
       const { error } = await supabase
         .from('bookings')
         .delete()
         .eq('id', id);
-        
+
       if (error) throw error;
       fetchBookings();
     } catch (error) {
@@ -105,6 +121,9 @@ export function BookingsAdmin() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900 border-b-2 border-teal-500 pb-2 inline-block">Réservations</h2>
+        {isMockAdmin && (
+          <span className="text-xs bg-amber-100 text-amber-700 px-3 py-1 rounded-full font-medium">Mode démo</span>
+        )}
       </div>
 
       <div className="overflow-x-auto">

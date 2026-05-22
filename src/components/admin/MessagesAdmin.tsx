@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
+import { mockContactMessages } from '../../lib/mockAdminData';
 import { Loader2, Trash2 } from 'lucide-react';
 
 interface ContactMessage {
@@ -14,18 +16,24 @@ interface ContactMessage {
 export function MessagesAdmin() {
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [loading, setLoading] = useState(true);
+  const { isMockAdmin } = useAuth();
 
   useEffect(() => {
     fetchMessages();
   }, []);
 
   const fetchMessages = async () => {
+    if (isMockAdmin) {
+      setMessages(mockContactMessages as ContactMessage[]);
+      setLoading(false);
+      return;
+    }
     try {
       const { data, error } = await supabase
         .from('contact_messages')
         .select('*')
         .order('created_at', { ascending: false });
-      
+
       if (error) throw error;
       setMessages(data || []);
     } catch (error) {
@@ -37,14 +45,18 @@ export function MessagesAdmin() {
   };
 
   const handleDelete = async (id: string, name: string) => {
+    if (isMockAdmin) {
+      alert('Mode démo — les modifications ne sont pas sauvegardées.');
+      return;
+    }
     if (!window.confirm(`Êtes-vous sûr de vouloir supprimer le message de "${name}" ?`)) return;
-    
+
     try {
       const { error } = await supabase
         .from('contact_messages')
         .delete()
         .eq('id', id);
-        
+
       if (error) throw error;
       fetchMessages();
     } catch (error) {
@@ -65,6 +77,9 @@ export function MessagesAdmin() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900 border-b-2 border-teal-500 pb-2 inline-block">Messages de Contact</h2>
+        {isMockAdmin && (
+          <span className="text-xs bg-amber-100 text-amber-700 px-3 py-1 rounded-full font-medium">Mode démo</span>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -78,8 +93,8 @@ export function MessagesAdmin() {
                   {msg.phone && <a href={`tel:${msg.phone}`} className="text-gray-500 hover:text-teal-600">{msg.phone}</a>}
                 </div>
               </div>
-              <button 
-                onClick={() => handleDelete(msg.id, msg.name)} 
+              <button
+                onClick={() => handleDelete(msg.id, msg.name)}
                 className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors"
                 title="Supprimer"
               >
