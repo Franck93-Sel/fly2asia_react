@@ -6,9 +6,11 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   isAdmin: boolean;
+  isMockAdmin: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  mockSignInAsAdmin: () => void;
   loading: boolean;
 }
 
@@ -18,6 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isMockAdmin, setIsMockAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .select('role')
           .eq('user_id', userId)
           .single();
-        
+
         if (!error && data) {
           setIsAdmin(data.role === 'admin');
         } else {
@@ -82,11 +85,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    setIsMockAdmin(false);
     await supabase.auth.signOut();
   };
 
+  const mockSignInAsAdmin = () => {
+    setIsMockAdmin(true);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, session, isAdmin, signIn, signUp, signOut, loading }}>
+    <AuthContext.Provider value={{ user, session, isAdmin, isMockAdmin, signIn, signUp, signOut, mockSignInAsAdmin, loading }}>
       {children}
     </AuthContext.Provider>
   );
