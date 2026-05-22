@@ -13,7 +13,7 @@ export function Login({ onNavigate }: LoginProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, mockSignInAsAdmin, user } = useAuth();
 
   if (user) {
     onNavigate('/my-bookings');
@@ -48,23 +48,9 @@ export function Login({ onNavigate }: LoginProps) {
     }
   };
 
-  const mockSignInAsAdmin = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      const { error } = await signIn('admin@demo.com', 'admin123');
-      if (error) {
-        setError('Erreur lors de la connexion admin');
-      } else {
-        onNavigate('/my-bookings');
-      }
-    } catch (err) {
-      setError('Une erreur est survenue. Veuillez réessayer.');
-    } finally {
-      setLoading(false);
-    }
+  const handleDemoAdmin = () => {
+    mockSignInAsAdmin();
+    onNavigate('/admin');
   };
 
   return (
@@ -148,16 +134,23 @@ export function Login({ onNavigate }: LoginProps) {
             </button>
           </form>
 
-          {isLogin && (
-            <button
-              onClick={mockSignInAsAdmin}
-              disabled={loading}
-              className="w-full mt-4 px-6 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              <ShieldCheck className="h-5 w-5" />
-              Demo Admin Login
-            </button>
-          )}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-3 bg-white text-gray-400">ou</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleDemoAdmin}
+            className="w-full flex items-center justify-center gap-2 px-6 py-3 border-2 border-teal-600 text-teal-600 rounded-lg font-semibold hover:bg-teal-50 transition-all"
+          >
+            <ShieldCheck className="h-5 w-5" />
+            Accéder à l'Espace Admin Démo
+          </button>
 
           <div className="mt-6 text-center">
             <button
