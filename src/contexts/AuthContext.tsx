@@ -16,6 +16,14 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const MOCK_ADMIN_USER = {
+  id: 'mock-admin-id',
+  email: 'admin@fly2asia.demo',
+  aud: 'authenticated',
+  role: 'authenticated',
+  created_at: '2024-01-01T00:00:00Z',
+} as User;
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -85,11 +93,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    setIsMockAdmin(false);
+    if (isMockAdmin) {
+      setUser(null);
+      setIsAdmin(false);
+      setIsMockAdmin(false);
+      return;
+    }
     await supabase.auth.signOut();
   };
 
   const mockSignInAsAdmin = () => {
+    setUser(MOCK_ADMIN_USER);
+    setIsAdmin(true);
     setIsMockAdmin(true);
   };
 
