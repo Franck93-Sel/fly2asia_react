@@ -29,4 +29,3 @@ dist-ssr
 .supabase/
 .claude/
 .bolt/
-docs/superpowers/
