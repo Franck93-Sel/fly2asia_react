@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plane, Mail, Lock } from 'lucide-react';
+import { Plane, Mail, Lock, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface LoginProps {
@@ -40,6 +40,25 @@ export function Login({ onNavigate }: LoginProps) {
         } else {
           onNavigate('/my-bookings');
         }
+      }
+    } catch (err) {
+      setError('Une erreur est survenue. Veuillez réessayer.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const mockSignInAsAdmin = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const { error } = await signIn('admin@demo.com', 'admin123');
+      if (error) {
+        setError('Erreur lors de la connexion admin');
+      } else {
+        onNavigate('/my-bookings');
       }
     } catch (err) {
       setError('Une erreur est survenue. Veuillez réessayer.');
@@ -128,6 +147,17 @@ export function Login({ onNavigate }: LoginProps) {
                 : "S'inscrire"}
             </button>
           </form>
+
+          {isLogin && (
+            <button
+              onClick={mockSignInAsAdmin}
+              disabled={loading}
+              className="w-full mt-4 px-6 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <ShieldCheck className="h-5 w-5" />
+              Demo Admin Login
+            </button>
+          )}
 
           <div className="mt-6 text-center">
             <button
